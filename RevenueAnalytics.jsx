@@ -16,7 +16,6 @@ import { DollarSign, FileText, TrendingUp, ChevronDown, ChevronUp } from 'lucide
 const RevenueAnalytics = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [roomType, setRoomType] = useState('all');
-  const [showDetails, setShowDetails] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [analyticsData, setAnalyticsData] = useState({
@@ -26,7 +25,6 @@ const RevenueAnalytics = () => {
       avg_revenue_per_booking: 0
     },
     monthlyData: [],
-    bookingDetails: [],
     roomTypes: []
   });
 
@@ -49,17 +47,15 @@ const RevenueAnalytics = () => {
         roomType: roomType
       });
 
-      const [summaryRes, monthlyRes, detailsRes, roomTypesRes] = await Promise.all([
+      const [summaryRes, monthlyRes, roomTypesRes] = await Promise.all([
         fetch(`http://localhost:3000/api/dashboard/revenue-summary?${queryParams}`),
         fetch(`http://localhost:3000/api/dashboard/revenue-trends?${queryParams}`),
-        fetch(`http://localhost:3000/api/dashboard/revenue-details?${queryParams}`),
         fetch(`http://localhost:3000/api/dashboard/room-types`)
       ]);
 
-      const [summaryData, monthlyData, detailsData, roomTypesData] = await Promise.all([
+      const [summaryData, monthlyData, roomTypesData] = await Promise.all([
         summaryRes.json(),
         monthlyRes.json(),
-        detailsRes.json(),
         roomTypesRes.json()
       ]);
 
@@ -70,7 +66,6 @@ const RevenueAnalytics = () => {
           avg_revenue_per_booking: 0
         },
         monthlyData: monthlyData.success ? monthlyData.data : [],
-        bookingDetails: detailsData.success ? detailsData.data : [],
         roomTypes: roomTypesData.success ? roomTypesData.data : []
       });
     } catch (error) {
@@ -81,13 +76,10 @@ const RevenueAnalytics = () => {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Booking ID', 'Room Type', 'Check-in', 'Amount Paid', 'Status'];
-    const rows = analyticsData.bookingDetails.map(booking => [
-      booking.booking_id,
-      booking.room_type,
-      booking.check_in,
-      booking.amount_paid,
-      booking.status
+    const headers = ['Month', 'Revenue'];
+    const rows = analyticsData.monthlyData.map(item => [
+      item.month,
+      item.revenue
     ]);
 
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -246,62 +238,6 @@ const RevenueAnalytics = () => {
                 <Bar dataKey="revenue" fill="#10b981" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-
-      {/* Collapsible Details Table */}
-      <div className="p-6">
-        <button
-          onClick={() => setShowDetails(!showDetails)}
-          className="flex items-center gap-2 text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-        >
-          {showDetails ? (
-            <ChevronUp className="h-5 w-5" />
-          ) : (
-            <ChevronDown className="h-5 w-5" />
-          )}
-          Booking Breakdown
-        </button>
-
-        {showDetails && (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Booking ID</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Room Type</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Check-in</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Amount Paid</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analyticsData.bookingDetails.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-8 text-gray-600">
-                      No booking data found
-                    </td>
-                  </tr>
-                ) : (
-                  analyticsData.bookingDetails.map((booking) => (
-                    <tr key={booking.booking_id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                      <td className="py-4 px-4 text-sm font-medium text-gray-900">#{booking.booking_id}</td>
-                      <td className="py-4 px-4 text-sm text-gray-900">{booking.room_type || '—'}</td>
-                      <td className="py-4 px-4 text-sm text-gray-900">{booking.check_in || '—'}</td>
-                      <td className="py-4 px-4 text-sm font-semibold text-green-600">
-                        {formatCurrency(booking.amount_paid)}
-                      </td>
-                      <td className="py-4 px-4 text-sm text-gray-900">
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                          {booking.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
           </div>
         )}
       </div>
