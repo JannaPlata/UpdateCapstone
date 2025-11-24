@@ -16,7 +16,6 @@ import { DollarSign, FileText, TrendingUp, ChevronDown, ChevronUp } from 'lucide
 const RevenueAnalytics = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [roomType, setRoomType] = useState('all');
-  const [status, setStatus] = useState('checked-out');
   const [showDetails, setShowDetails] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -28,13 +27,12 @@ const RevenueAnalytics = () => {
     },
     monthlyData: [],
     bookingDetails: [],
-    roomTypes: [],
-    statuses: ['arrival', 'checked-in', 'checked-out', 'cancelled']
+    roomTypes: []
   });
 
   useEffect(() => {
     loadAnalyticsData();
-  }, [currentMonth, roomType, status]);
+  }, [currentMonth, roomType]);
 
   const loadAnalyticsData = async () => {
     setLoading(true);
@@ -48,8 +46,7 @@ const RevenueAnalytics = () => {
       const queryParams = new URLSearchParams({
         start: startStr,
         end: endStr,
-        roomType: roomType,
-        status: status
+        roomType: roomType
       });
 
       const [summaryRes, monthlyRes, detailsRes, roomTypesRes] = await Promise.all([
@@ -74,8 +71,7 @@ const RevenueAnalytics = () => {
         },
         monthlyData: monthlyData.success ? monthlyData.data : [],
         bookingDetails: detailsData.success ? detailsData.data : [],
-        roomTypes: roomTypesData.success ? roomTypesData.data : [],
-        statuses: analyticsData.statuses
+        roomTypes: roomTypesData.success ? roomTypesData.data : []
       });
     } catch (error) {
       console.error('Failed to load analytics data:', error);
@@ -194,18 +190,6 @@ const RevenueAnalytics = () => {
                 </option>
               ))}
             </select>
-
-            {/* Status */}
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="checked-out">Checked-Out</option>
-              <option value="checked-in">Checked-In</option>
-            </select>
-
-
           </div>
         </div>
       </div>
